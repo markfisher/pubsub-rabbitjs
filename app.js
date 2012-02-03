@@ -1,14 +1,18 @@
-var http = require('http');
-var url = require('url');
-var fs = require('fs');
-var sockjs = require('sockjs');
+var http = require('http'),
+url = require('url'),
+fs = require('fs'),
+sockjs = require('sockjs'),
+rabbitUrl = 'amqp://localhost', //default, might be overwritten below...
+enableWS = true; //WebSockets enabled by default, overriden when on CF
 
-var rabbitUrl = 'amqp://localhost'; //default, might be overwritten below...
+if (process.env.VCAP_APP_PORT) {
+    enableWS = false;
+}
 
 // discover the bound CloudFoundry RabbitMQ service if available
 if (process.env.VCAP_SERVICES) {
   var services = JSON.parse(process.env.VCAP_SERVICES);
-  for (serviceType in services) {
+  for (var serviceType in services) {
     if (serviceType.match(/rabbit*/)) {
       var service = services[serviceType][0];
       console.log("Connecting to RabbitMQ service " + service.name + ":" + service.credentials.url);
@@ -19,9 +23,8 @@ if (process.env.VCAP_SERVICES) {
 }
 
 var context = require('rabbit.js').createContext(rabbitUrl);
-
 var httpserver = http.createServer(handler);
-var sockjs_opts = {sockjs_url: "http://sockjs.github.com/sockjs-client/sockjs-latest.min.js"};
+var sockjs_opts = {sockjs_url: "http://cdn.sockjs.org/sockjs-0.2.min.js", websocket: enableWS};
 var sjs = sockjs.createServer(sockjs_opts);
 sjs.installHandlers(httpserver, {prefix: '[/]socks'});
 
@@ -49,11 +52,11 @@ context.on('ready', function() {
 });
 
 function authenticate(username) {
-  return /^larry$|^curly$|^moe$/.test(username);
+  return (/^larry$|^curly$|^moe$/).test(username);
 }
 
 httpserver.listen(process.env.VCAP_APP_PORT || 9999);
-console.log('listening')
+console.log('listening');
 
 function handler(req, res) {
   var path = url.parse(req.url).pathname;
