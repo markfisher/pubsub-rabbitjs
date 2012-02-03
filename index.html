@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>PubSub Example</title>
+    <script src="http://cdn.sockjs.org/sockjs-0.1.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <script>
+      var sock = new SockJS("http://localhost:9999/socks");
+
+      sock.onmessage = function(msg) {
+        $('#in').val(msg.data);
+      };
+
+      function send() {
+        var msg = $('#out').val();
+        sock.send(msg);
+      }
+    </script>
+    <form onsubmit="send(); return false;">
+      <textarea id="out" rows="5" cols="50"></textarea>
+      <input type="submit" value="Send"/>
+      <textarea id="in" rows="5" cols="50" disabled="true"></textarea>
+    </form>
+  </body>
+</html>
